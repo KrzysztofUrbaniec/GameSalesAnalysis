@@ -17,7 +17,7 @@ ORDER BY Year DESC;
 
 /* 
  * What was the number of "good" games per year?
- * Q2: How many games with average critic score >= 8.0 were released each year?
+ * Q2: How many games with average (i.e. across different platforms) critic score >= 8.0 were released each year?
  * Return: Year, Num Games
 */
 
@@ -28,13 +28,9 @@ FROM (
 	SELECT 
 		gs.Name, 
 		gs.Year, 
-		AVG(r.Critic_Score) AS Avg_Score
+		AVG(gs.Critic_Score) AS Avg_Score
 	FROM 
 		game_sales gs 
-	JOIN 
-		reviews r 
-	ON 
-		gs.Name = r.Name AND gs.Platform = r.Platform
 	GROUP BY 
 		Name, Year
 	HAVING 
@@ -51,14 +47,10 @@ ORDER BY Year DESC;
 SELECT  
 	gs.Year,
 	COUNT(gs.Name) as Num_Games,
-	ROUND(AVG(r.Critic_Score),1) AS Avg_Critic_Score
+	ROUND(AVG(gs.Critic_Score),1) AS Avg_Critic_Score
 FROM 
 	game_sales gs 
-JOIN 
-	reviews r 
-ON 
-	gs.Name = r.Name AND gs.Platform = r.Platform
-WHERE gs.Platform = 'PC' AND r.Critic_Score IS NOT NULL
+WHERE gs.Platform = 'PC' AND gs.Critic_Score IS NOT NULL
 GROUP BY Year
 ORDER BY Year DESC;
 
@@ -130,17 +122,13 @@ FROM (
 	SELECT 
 		gs.Name, 
 		CASE 
-			WHEN AVG(r.Critic_Score) < 5.5 THEN 'Low'
-			WHEN AVG(r.Critic_Score) >= 5.5 AND AVG(r.Critic_Score) < 8.5 THEN 'Medium'
-			WHEN AVG(r.Critic_Score) >= 8.5 THEN 'High'
+			WHEN AVG(gs.Critic_Score) < 5.5 THEN 'Low'
+			WHEN AVG(gs.Critic_Score) >= 5.5 AND AVG(gs.Critic_Score) < 8.5 THEN 'Medium'
+			WHEN AVG(gs.Critic_Score) >= 8.5 THEN 'High'
 		END AS Critic_Score_Category,
 		SUM(gs.Total_Shipped) AS Total
 	FROM 
 		game_sales gs 
-	JOIN 
-		reviews r 
-	ON 
-		gs.Name = r.Name AND gs.Platform = r.Platform
 	GROUP BY Name
 	HAVING 
 		Critic_Score_Category IS NOT NULL) sq
@@ -237,13 +225,9 @@ FROM (
 		gs.Platform,
 		gs.Name,
 		gs.Publisher,
-		AVG(r.Critic_Score) AS Avg_CScore
+		AVG(gs.Critic_Score) AS Avg_CScore
 	FROM 
 		game_sales gs 
-	JOIN
-		reviews r 
-	ON
-		gs.Name = r.Name AND gs.Platform = r.Platform
 	GROUP BY 
 		gs.Platform, gs.Name, gs.Publisher
 	HAVING 
