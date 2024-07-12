@@ -2,6 +2,22 @@
  * SQL queries for the analysis of game sales
  */
 
+-- Add id column
+ALTER TABLE game_sales 
+ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+
+-- Remove duplicated rows
+DELETE FROM game_sales WHERE id IN ( 
+	SELECT id
+	FROM (
+	SELECT *,
+		ROW_NUMBER() OVER (PARTITION BY Name, Platform, Developer, Year
+		ORDER BY id) rn
+	FROM
+		game_sales gs) sq
+	WHERE rn > 1
+);
+
 -- Yearly trends:
 /*
  * Q1: How many games were sold each year (in millions of copies), regardless of the platform? 
