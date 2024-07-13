@@ -56,7 +56,7 @@ ORDER BY Year DESC;
 
 /*
  * We'd like to know if games are getting worse.  
- * Q3: How have the average critic score changed over the years for games released on PC? Take also the number of games released per year into account.
+ * Q3: How have the average critic score changed over the years for games released on PC? Filter the dataset, so it contains only years with more than 5 games.
  * Return: Year, Num Games, Avg Critic Score
  */
 
@@ -68,6 +68,7 @@ FROM
 	game_sales gs 
 WHERE gs.Platform = 'PC' AND gs.Critic_Score IS NOT NULL
 GROUP BY Year
+HAVING Num_Games > 5
 ORDER BY Year DESC;
 
 /*
@@ -139,8 +140,8 @@ FROM (
 		gs.Name, 
 		CASE 
 			WHEN AVG(gs.Critic_Score) < 5.5 THEN 'Low'
-			WHEN AVG(gs.Critic_Score) >= 5.5 AND AVG(gs.Critic_Score) < 8.5 THEN 'Medium'
-			WHEN AVG(gs.Critic_Score) >= 8.5 THEN 'High'
+			WHEN AVG(gs.Critic_Score) >= 5.5 AND AVG(gs.Critic_Score) <= 8.5 THEN 'Medium'
+			WHEN AVG(gs.Critic_Score) > 8.5 THEN 'High'
 		END AS Critic_Score_Category,
 		SUM(gs.Total_Shipped) AS Total
 	FROM 
@@ -262,4 +263,28 @@ WHERE
 ORDER BY 
 	Platform, Avg_CScore DESC;
 	
+/*
+ * Q3: What was the popularity of different platforms in past decades?
+ * Calculate the total sales for each decade and divide platforms into three groups: PC, Console or Other
+ * Return: Decade, Platform_type, Total
+ */
+
+SELECT 
+    CASE 
+        WHEN year BETWEEN 1980 AND 1989 THEN '1980s'
+        WHEN year BETWEEN 1990 AND 1999 THEN '1990s'
+        WHEN year BETWEEN 2000 AND 2009 THEN '2000s'
+        WHEN year BETWEEN 2010 AND 2019 THEN '2010s'
+        ELSE 'Other'
+    END AS Decade,
+    CASE 
+        WHEN (gs.Platform LIKE 'PS%' OR gs.Platform IN ('X360', 'PSP', 'DS', 'Wii')) THEN 'Console'
+        WHEN gs.Platform IN ('PC') THEN 'PC'
+        ELSE 'Other'
+    END AS Platform_type,
+    ROUND(SUM(Total_Shipped),2) AS Total
+FROM game_sales gs
+GROUP BY Decade, Platform_type
+ORDER BY Decade, Platform_type;
+
 	
